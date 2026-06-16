@@ -1,0 +1,273 @@
+/* ==========================================
+   CONTACT PAGE GRID LAYOUT
+   ========================================== */
+.contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 4rem;
+    align-items: start;
+}
+
+/* ==========================================
+   CONTACT DETAILS
+   ========================================== */
+.contact-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.contact-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+}
+
+.contact-icon-box {
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    background: rgba(212, 175, 55, 0.05);
+    border: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    fill: var(--primary);
+    flex-shrink: 0;
+}
+
+.contact-info-text h3 {
+    font-family: var(--font-ui);
+    font-size: 1.15rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.contact-info-text p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+/* ==========================================
+   CONTACT FORM & FLOATING LABELS
+   ========================================== */
+.contact-form-card {
+    position: relative;
+}
+
+.form-group {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.form-input {
+    width: 100%;
+    padding: 1.1rem 1.2rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    transition: var(--transition-smooth);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+textarea.form-input {
+    resize: none;
+    min-height: 140px;
+}
+
+/* Floating Label Animation */
+.form-label {
+    position: absolute;
+    left: 1.2rem;
+    top: 1.1rem;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    transition: var(--transition-smooth);
+    pointer-events: none;
+    font-family: var(--font-ui);
+}
+
+/* Trigger movement on focus or input text presence */
+.form-input:focus ~ .form-label,
+.form-input:not(:placeholder-shown) ~ .form-label {
+    top: -10px;
+    left: 0.8rem;
+    font-size: 0.75rem;
+    color: var(--primary);
+    background-color: var(--bg-primary); /* Matches body background dynamically */
+    padding: 0 0.5rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* Input validation glows */
+.form-input.is-valid {
+    border-color: #28a745 !important;
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.15);
+}
+
+.form-input.is-invalid {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 10px rgba(220, 53, 69, 0.15);
+}
+
+/* Inline error message */
+.error-msg {
+    position: absolute;
+    bottom: -1.4rem;
+    left: 0.25rem;
+    font-size: 0.75rem;
+    color: #dc3545;
+    opacity: 0;
+    transform: translateY(-5px);
+    transition: var(--transition-quick);
+    pointer-events: none;
+}
+
+.form-input.is-invalid ~ .error-msg {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.submit-btn-wrap {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Form success notification toaster */
+.toast-notification {
+    position: fixed;
+    bottom: -80px;
+    right: 2rem;
+    background: var(--bg-glass);
+    border: 1px solid #28a745;
+    color: var(--text-primary);
+    padding: 1.25rem 2rem;
+    border-radius: 12px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    z-index: 2000;
+    transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.toast-notification.active {
+    bottom: 2rem;
+}
+
+.toast-icon {
+    width: 24px;
+    height: 24px;
+    fill: #28a745;
+}
+
+.toast-text h4 {
+    font-family: var(--font-ui);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.toast-text p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* ==========================================
+   INTERACTIVE LEAFLET MAP
+   ========================================== */
+.map-section {
+    padding-top: 0;
+}
+
+.map-container {
+    width: 100%;
+    height: 450px;
+    border-radius: 16px;
+    border: 1px solid var(--border-subtle);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+    z-index: 10;
+}
+
+/* Styled map title overlay */
+.map-overlay-badge {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: var(--bg-glass);
+    border: 1px solid var(--border-subtle);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 0.85rem 1.5rem;
+    border-radius: 10px;
+    z-index: 1000;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    pointer-events: none;
+}
+
+.map-overlay-badge h4 {
+    font-family: var(--font-ui);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.map-overlay-badge p {
+    color: var(--primary);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Customize Leaflet style for dark theme integration */
+.leaflet-container {
+    background: var(--bg-primary) !important;
+}
+
+.leaflet-bar a {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-subtle) !important;
+}
+
+.leaflet-bar a:hover {
+    color: var(--primary) !important;
+    background-color: var(--bg-card-hover) !important;
+}
+
+/* Customize Leaflet popup for theme integration */
+.leaflet-popup-content-wrapper, .leaflet-popup-tip {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-subtle) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35) !important;
+}
+
+.leaflet-popup-content {
+    margin: 12px 18px !important;
+}
+
+.leaflet-popup-close-button {
+    color: var(--text-secondary) !important;
+}
+
+.leaflet-popup-close-button:hover {
+    color: var(--primary) !important;
+}
+
+/* ==========================================
+   MEDIA QUERIES (CONTACT)
+   ========================================== */
+@media (max-width: 968px) {
+    .contact-grid {
+        grid-template-columns: 1fr;
+        gap: 5rem;
+    }
+}
