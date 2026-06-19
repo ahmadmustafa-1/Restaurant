@@ -789,3 +789,62 @@ html.light-theme .moon-icon {
     display: none;
 }
 
+/* Shopping Cart Header Button */
+.header-cart-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    border-radius: 50%;
+    color: var(--primary);
+    cursor: pointer;
+    transition: var(--transition-quick);
+    margin-left: 1rem;
+    flex-shrink: 0;
+}
+
+.header-cart-btn:hover {
+    border-color: var(--primary);
+    background: rgba(212, 175, 55, 0.06);
+    transform: scale(1.05);
+}
+
+.header-cart-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Cart badge count */
+.cart-count-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--primary);
+    color: #0a0b0d;
+    font-family: var(--font-ui);
+    font-size: 0.65rem;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: none; /* Injected dynamically by main.js */
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--bg-primary);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    animation: badgePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+html.light-theme .cart-count-badge {
+    border-color: #ffffff;
+}
+
+@keyframes badgePop {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+

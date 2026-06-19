@@ -139,4 +139,85 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Global Cart API
+    window.cartAPI = {
+        getCart: function() {
+            try {
+                return JSON.parse(localStorage.getItem('cart')) || [];
+            } catch (e) {
+                console.error("Error parsing cart:", e);
+                return [];
+            }
+        },
+        saveCart: function(cart) {
+            localStorage.setItem('cart', JSON.stringify(cart));
+            this.updateCartBadge();
+        },
+        addToCart: function(item) {
+            const cart = this.getCart();
+            const existingItem = cart.find(i => i.name === item.name);
+            if (existingItem) {
+                existingItem.quantity = (existingItem.quantity || 1) + 1;
+            } else {
+                item.quantity = 1;
+                cart.push(item);
+            }
+            this.saveCart(cart);
+        },
+        updateCartBadge: function() {
+            const cart = this.getCart();
+            const totalCount = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+            const badge = document.getElementById('cart-badge-count');
+            if (badge) {
+                badge.textContent = totalCount;
+                if (totalCount > 0) {
+                    badge.style.display = 'flex';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }
+    };
+
+    // Update cart count badge on page load
+    window.cartAPI.updateCartBadge();
+
+    // 9. Featured Dishes Order Click (Home page to checkout)
+    const featuredOrderBtns = document.querySelectorAll('.featured-order-btn');
+    featuredOrderBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const name = this.getAttribute('data-name');
+            const price = parseInt(this.getAttribute('data-price')) || 0;
+            const image = this.getAttribute('data-image');
+            const badge = this.getAttribute('data-badge');
+            const description = this.getAttribute('data-desc');
+
+            const item = {
+                name: name,
+                price: price,
+                image: image,
+                badge: badge,
+                description: description
+            };
+
+            // Add item to cart using global API
+            window.cartAPI.addToCart(item);
+            
+            // Micro-animation feedback
+            const checkIcon = `<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`;
+            const originalIcon = this.innerHTML;
+            
+            this.innerHTML = checkIcon;
+            this.style.background = '#d4af37';
+            this.style.borderColor = '#d4af37';
+            
+            setTimeout(() => {
+                this.innerHTML = originalIcon;
+                this.style.background = '';
+                this.style.borderColor = '';
+            }, 1000);
+        });
+    });
 });

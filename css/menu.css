@@ -262,3 +262,37 @@
         background: rgba(212, 175, 55, 0.15);
     }
 }
+
+/* ==========================================
+   ICON BUTTON STYLING (ADD TO ORDER)
+   ========================================== */
+.btn-icon-only {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-quick);
+}
+
+.btn-icon-only svg {
+    width: 16px;
+    height: 16px;
+    fill: var(--text-primary);
+    transition: var(--transition-quick);
+}
+
+.btn-icon-only:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.btn-icon-only:hover svg {
+    fill: var(--bg-primary);
+}
+
+

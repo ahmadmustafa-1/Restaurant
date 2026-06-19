@@ -205,21 +205,27 @@ document.addEventListener('DOMContentLoaded', () => {
             menuGrid.appendChild(card);
         });
 
-        // Bind quick click handler to the plus button for satisfying micro-interaction
+        // Bind quick click handler to add item to cart
         document.querySelectorAll('.add-to-order').forEach(btn => {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
                 const itemId = this.getAttribute('data-id');
                 const selectedItem = MENU_ITEMS.find(i => i.id == itemId);
                 
+                // Add selected item details to cart using global API
+                if (window.cartAPI) {
+                    window.cartAPI.addToCart(selectedItem);
+                }
+                
                 // Show a mini visual confirmation
                 const checkIcon = `<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`;
                 const originalIcon = this.innerHTML;
                 
                 this.innerHTML = checkIcon;
-                this.style.background = '#28a745';
-                this.style.borderColor = '#28a745';
+                this.style.background = '#d4af37';
+                this.style.borderColor = '#d4af37';
                 
+                // Revert icon after 1 second
                 setTimeout(() => {
                     this.innerHTML = originalIcon;
                     this.style.background = '';
