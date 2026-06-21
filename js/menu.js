@@ -129,6 +129,36 @@ const MENU_ITEMS = [
         description: "Warm single-origin Belgian dark chocolate cake with a molten liquid core, served with organic fresh raspberries and Madagascar vanilla gelato.",
         rating: 5,
         badge: "Warm Comfort"
+    },
+    {
+        id: 13,
+        name: "Truffle Tagliolini",
+        category: "signature",
+        price: 1950,
+        image: "assets/images/dish-1.jpg",
+        description: "House-made pasta rolled thin, tossed in rich white truffle butter, shaved Piedmontese winter truffles, and aged Parmigiano-Reggiano.",
+        rating: 5,
+        badge: "Signature"
+    },
+    {
+        id: 14,
+        name: "Seared Wagyu Filet",
+        category: "signature",
+        price: 2450,
+        image: "assets/images/dish-2.jpg",
+        description: "A5 Grade Japanese Wagyu, pan-seared with rosemary and garlic, served alongside charcoal-roasted root vegetables and a rich bone marrow glaze.",
+        rating: 5,
+        badge: "Exquisite"
+    },
+    {
+        id: 15,
+        name: "Atlantic Glazed Salmon",
+        category: "signature",
+        price: 2150,
+        image: "assets/images/dish-3.jpg",
+        description: "Pan-roasted Atlantic salmon fillet glazed with organic honey and citrus ginger reduction, served over a bed of baby bok choy and wild black rice.",
+        rating: 5,
+        badge: "Ocean Pure"
     }
 ];
 

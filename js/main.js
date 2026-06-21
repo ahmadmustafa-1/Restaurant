@@ -188,6 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
     featuredOrderBtns.forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
+            const id = parseInt(this.getAttribute('data-id')) || null;
             const name = this.getAttribute('data-name');
             const price = parseInt(this.getAttribute('data-price')) || 0;
             const image = this.getAttribute('data-image');
@@ -195,6 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const description = this.getAttribute('data-desc');
 
             const item = {
+                id: id,
                 name: name,
                 price: price,
                 image: image,

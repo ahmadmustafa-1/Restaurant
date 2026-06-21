@@ -272,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             // Loading state for checkout button
-            const submitBtn = checkoutForm.querySelector('button[type="submit"]');
+            const submitBtn = document.getElementById('btn-submit-order') || checkoutForm.querySelector('button[type="submit"]');
             const originalBtnText = submitBtn.innerHTML;
             submitBtn.disabled = true;
             submitBtn.innerHTML = `Placing Order...`;
