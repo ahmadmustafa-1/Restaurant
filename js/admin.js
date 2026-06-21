@@ -6,11 +6,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnExportCsv = document.getElementById('btn-export-csv');
     const btnClearAll = document.getElementById('btn-clear-all');
 
+    // Orders Selectors
+    const ordersTableBody = document.getElementById('orders-table-body');
+    const ordersSearchInput = document.getElementById('admin-orders-search');
+    const btnExportOrdersCsv = document.getElementById('btn-export-orders-csv');
+    const btnClearOrders = document.getElementById('btn-clear-orders');
+
     // Stats Counters
     const statTotal = document.getElementById('stat-total');
     const statPending = document.getElementById('stat-pending');
     const statConfirmed = document.getElementById('stat-confirmed');
     const statCancelled = document.getElementById('stat-cancelled');
+    const statOrders = document.getElementById('stat-orders');
 
     // Toaster elements
     const toast = document.getElementById('toast-success');
@@ -18,14 +25,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // State Variables
     let reservations = [];
+    let orders = [];
     let currentFilter = 'All';
     let currentSearchQuery = '';
+    let currentOrdersSearchQuery = '';
+    let activeTab = 'reservations';
 
     // Initialize Page
     init();
 
     function init() {
         loadReservations();
+        loadOrders();
         setupListeners();
     }
 
@@ -51,6 +62,23 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTable();
     }
 
+    async function loadOrders() {
+        try {
+            const response = await fetch('https://celestia-api-46o5.onrender.com/api/orders');
+            if (!response.ok) throw new Error("API orders load error");
+            orders = await response.json();
+        } catch (err) {
+            console.warn("Backend API offline. Loading orders from localStorage.", err);
+            try {
+                orders = JSON.parse(localStorage.getItem('celestia_orders')) || [];
+            } catch (err2) {
+                orders = [];
+            }
+        }
+        renderOrdersTable();
+        await loadStatsAPI();
+    }
+
     async function loadStatsAPI() {
         try {
             const response = await fetch('https://celestia-api-46o5.onrender.com/api/stats');
@@ -60,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
             animateCounter(statPending, stats.pending);
             animateCounter(statConfirmed, stats.confirmed);
             animateCounter(statCancelled, stats.cancelled);
+            animateCounter(statOrders, stats.totalOrders || 0);
         } catch (err) {
             updateStatsLocal();
         }
@@ -75,6 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
         animateCounter(statPending, pending);
         animateCounter(statConfirmed, confirmed);
         animateCounter(statCancelled, cancelled);
+        animateCounter(statOrders, orders.length);
     }
 
     // Save current state back to localStorage (used in fallback mode)
@@ -219,7 +249,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 4. Listeners setup
     function setupListeners() {
-        // Search Input listener
+        // Tab switching
+        const tabReservations = document.getElementById('tab-reservations');
+        const tabOrders = document.getElementById('tab-orders');
+        const reservationsView = document.getElementById('reservations-view');
+        const ordersView = document.getElementById('orders-view');
+
+        if (tabReservations && tabOrders) {
+            tabReservations.addEventListener('click', () => {
+                tabReservations.classList.add('active');
+                tabOrders.classList.remove('active');
+                reservationsView.classList.remove('hide');
+                ordersView.classList.add('hide');
+                activeTab = 'reservations';
+            });
+
+            tabOrders.addEventListener('click', () => {
+                tabOrders.classList.add('active');
+                tabReservations.classList.remove('active');
+                ordersView.classList.remove('hide');
+                reservationsView.classList.add('hide');
+                activeTab = 'orders';
+                renderOrdersTable();
+            });
+        }
+
+        // Reservations Search Input listener
         let searchTimeout;
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
@@ -249,6 +304,28 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear All button click
         if (btnClearAll) {
             btnClearAll.addEventListener('click', clearAllReservations);
+        }
+
+        // Orders Search Input listener
+        if (ordersSearchInput) {
+            let searchTimeoutOrders;
+            ordersSearchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeoutOrders);
+                searchTimeoutOrders = setTimeout(() => {
+                    currentOrdersSearchQuery = e.target.value.trim();
+                    renderOrdersTable();
+                }, 200);
+            });
+        }
+
+        // Export Orders CSV button click
+        if (btnExportOrdersCsv) {
+            btnExportOrdersCsv.addEventListener('click', exportOrdersToCSV);
+        }
+
+        // Clear All Orders button click
+        if (btnClearOrders) {
+            btnClearOrders.addEventListener('click', clearAllOrders);
         }
     }
 
@@ -400,6 +477,188 @@ document.addEventListener('DOMContentLoaded', () => {
     function escapeCSVCell(str) {
         if (!str) return '';
         return str.replace(/"/g, '""'); // Escape double quotes by doubling them
+    }
+
+    // Orders rendering and action handlers
+    function renderOrdersTable() {
+        if (!ordersTableBody) return;
+        ordersTableBody.innerHTML = '';
+
+        const filtered = orders.filter(item => {
+            const searchQueryLower = currentOrdersSearchQuery.toLowerCase();
+            const matchesSearch = !currentOrdersSearchQuery || 
+                (item.id && item.id.toLowerCase().includes(searchQueryLower)) ||
+                (item.customer && item.customer.name && item.customer.name.toLowerCase().includes(searchQueryLower)) ||
+                (item.customer && item.customer.email && item.customer.email.toLowerCase().includes(searchQueryLower)) ||
+                (item.billing && item.billing.toLowerCase().includes(searchQueryLower));
+            
+            return matchesSearch;
+        });
+
+        if (filtered.length === 0) {
+            ordersTableBody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="table-empty-row">
+                        <div class="empty-state">
+                            <svg viewBox="0 0 24 24" width="48" height="48"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H10v-2h4v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                            <p>${orders.length === 0 ? 'No orders placed yet.' : 'No orders match your search query.'}</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        filtered.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.className = 'reveal';
+            tr.style.opacity = '1';
+            tr.style.transform = 'translateY(0)';
+
+            // Render list of items
+            const itemsListHTML = (item.items || []).map(prod => 
+                `<li>${escapeHTML(prod.name)} <strong style="color: var(--primary);">x${prod.quantity}</strong></li>`
+            ).join('');
+
+            // Format date
+            const dateStr = item.date ? new Date(item.date).toLocaleString('en-US', {
+                year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+            }) : 'N/A';
+
+            tr.innerHTML = `
+                <td>
+                    <div class="client-info-block">
+                        <span class="client-name" style="color: var(--primary); font-family: var(--font-display); font-weight: 600;">#${escapeHTML(item.id)}</span>
+                        <span class="submitted-time-text" style="font-size: 0.8rem; opacity: 0.8;">${dateStr}</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="client-info-block">
+                        <span class="client-name">${escapeHTML(item.customer ? item.customer.name : 'Unknown')}</span>
+                        <a href="mailto:${escapeHTML(item.customer ? item.customer.email : '')}" class="client-email">${escapeHTML(item.customer ? item.customer.email : '')}</a>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">${escapeHTML(item.customer ? item.customer.phone : '')}</span>
+                    </div>
+                </td>
+                <td>
+                    <ul class="order-items-list">
+                        ${itemsListHTML}
+                    </ul>
+                </td>
+                <td>
+                    <span style="font-weight: 600; color: var(--primary);">Rs. ${(item.grandTotal || 0).toLocaleString()}</span>
+                </td>
+                <td>
+                    <div style="font-size: 0.85rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: normal;" title="${escapeHTML(item.billing)}">
+                        ${escapeHTML(item.billing)}
+                    </div>
+                </td>
+                <td>
+                    <span class="status-pill status-confirmed" style="background: rgba(23, 162, 184, 0.1); border-color: #17a2b8; color: #17a2b8;">${escapeHTML(item.payment || 'COD')}</span>
+                </td>
+                <td>
+                    <div class="action-controls-wrap">
+                        <!-- Delete Button -->
+                        <button class="btn-table-action btn-delete-order" data-id="${item.id}" title="Permanently Delete Order">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                        </button>
+                    </div>
+                </td>
+            `;
+
+            ordersTableBody.appendChild(tr);
+        });
+
+        // Attach action listeners for orders
+        attachOrdersActionListeners();
+    }
+
+    function attachOrdersActionListeners() {
+        document.querySelectorAll('.btn-delete-order').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.dataset.id;
+                deleteOrder(id);
+            });
+        });
+    }
+
+    async function deleteOrder(id) {
+        const confirmDelete = confirm(`Are you sure you want to permanently delete order #${id}?`);
+        if (!confirmDelete) return;
+
+        try {
+            const response = await fetch(`https://celestia-api-46o5.onrender.com/api/orders/${id}`, {
+                method: 'DELETE'
+            });
+            if (!response.ok) throw new Error("Delete endpoint error");
+        } catch (err) {
+            console.warn("Delete order API endpoint error. Deleting locally.", err);
+        }
+        
+        orders = orders.filter(o => o.id !== id);
+        try {
+            localStorage.setItem('celestia_orders', JSON.stringify(orders));
+        } catch (e) {}
+        
+        renderOrdersTable();
+        updateStatsLocal();
+        showToast("Order record deleted permanently.");
+    }
+
+    function clearAllOrders() {
+        if (orders.length === 0) {
+            alert("No order records exist to clear.");
+            return;
+        }
+
+        const verify1 = confirm("CAUTION: This will permanently delete ALL online orders. Do you want to proceed?");
+        if (!verify1) return;
+
+        const verify2 = confirm("FINAL CHECK: Are you absolutely sure? This action is irreversible.");
+        if (!verify2) return;
+
+        localStorage.removeItem('celestia_orders');
+        orders = [];
+        updateStatsLocal();
+        renderOrdersTable();
+        showToast("Cleared online order records.");
+    }
+
+    function exportOrdersToCSV() {
+        if (orders.length === 0) {
+            alert("No order data available to export.");
+            return;
+        }
+
+        const headers = ["Order ID", "Date", "Customer Name", "Email", "Phone", "Items Ordered", "Grand Total", "Address", "Payment Method"];
+        const csvRows = [headers.join(",")];
+        
+        orders.forEach(item => {
+            const itemsStr = (item.items || []).map(p => `${p.name} (x${p.quantity})`).join("; ");
+            const values = [
+                item.id,
+                `"${escapeCSVCell(item.date)}"`,
+                `"${escapeCSVCell(item.customer ? item.customer.name : 'Unknown')}"`,
+                `"${escapeCSVCell(item.customer ? item.customer.email : '')}"`,
+                `"${escapeCSVCell(item.customer ? item.customer.phone : '')}"`,
+                `"${escapeCSVCell(itemsStr)}"`,
+                item.grandTotal,
+                `"${escapeCSVCell(item.billing)}"`,
+                `"${escapeCSVCell(item.payment || 'COD')}"`
+            ];
+            csvRows.push(values.join(","));
+        });
+
+        const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
+        const encodedUri = encodeURI(csvContent);
+        
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `celestia_orders_${Date.now()}.csv`);
+        document.body.appendChild(link);
+        
+        link.click();
+        document.body.removeChild(link);
+        showToast("Orders CSV file exported successfully.");
     }
 
     // Toast triggers helper
