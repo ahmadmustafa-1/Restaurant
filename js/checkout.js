@@ -279,7 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             async function submitOrder() {
                 try {
-                    const response = await fetch('http://localhost:3000/api/checkout', {
+                    const response = await fetch('https://celestia-api-46o5.onrender.com/api/checkout', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'

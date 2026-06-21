@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Dynamic function to submit
             async function submitReservation() {
                 try {
-                    const response = await fetch('http://localhost:3000/api/reservations', {
+                    const response = await fetch('https://celestia-api-46o5.onrender.com/api/reservations', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
