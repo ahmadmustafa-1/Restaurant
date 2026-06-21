@@ -848,3 +848,48 @@ html.light-theme .cart-count-badge {
     to { transform: scale(1); opacity: 1; }
 }
 
+/* Global utility classes */
+.hide {
+    display: none !important;
+}
+
+/* Form success notification toaster */
+.toast-notification {
+    position: fixed;
+    bottom: -80px;
+    right: 2rem;
+    background: var(--bg-glass);
+    border: 1px solid #28a745;
+    color: var(--text-primary);
+    padding: 1.25rem 2rem;
+    border-radius: 12px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    z-index: 2000;
+    transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.toast-notification.active {
+    bottom: 2rem;
+}
+
+.toast-icon {
+    width: 24px;
+    height: 24px;
+    fill: #28a745;
+}
+
+.toast-text h4 {
+    font-family: var(--font-ui);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.toast-text p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+

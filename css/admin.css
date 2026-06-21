@@ -496,3 +496,48 @@
         justify-content: flex-start;
     }
 }
+
+/* Disable scroll reveal on admin panel to prevent dashboard visibility bugs */
+.reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+}
+
+/* Tabs switcher styling */
+.admin-tab-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.admin-tab-btn:hover {
+    color: var(--text-light);
+}
+
+.admin-tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+/* Order items list styling */
+.order-items-list {
+    font-size: 0.85rem;
+    padding-left: 1.2rem;
+    margin: 0;
+    text-align: left;
+}
+
+.order-items-list li {
+    margin-bottom: 4px;
+    color: var(--text-light);
+}
+
+
