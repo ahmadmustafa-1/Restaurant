@@ -124,8 +124,54 @@ document.addEventListener('DOMContentLoaded', () => {
             style.innerHTML = `@keyframes spin { 100% { transform: rotate(360deg); } }`;
             document.head.appendChild(style);
 
-            // Simulate server network latency
-            setTimeout(() => {
+            // Capture reservation payload
+            const payload = {
+                name: nameInput.value.trim(),
+                email: emailInput.value.trim(),
+                subject: subjectInput.value.trim(),
+                message: messageInput.value.trim()
+            };
+
+            // Dynamic function to submit
+            async function submitReservation() {
+                try {
+                    const response = await fetch('http://localhost:3000/api/reservations', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error("API post error");
+                    console.log("Reservation persisted in backend API database.");
+                } catch (err) {
+                    console.warn("Backend API offline. Falling back to local persistence.", err);
+                    
+                    // Fallback to localStorage
+                    const reservationData = {
+                        id: 'res_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                        name: payload.name,
+                        email: payload.email,
+                        subject: payload.subject,
+                        message: payload.message,
+                        date: new Date().toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }),
+                        status: 'Pending'
+                    };
+
+                    const existing = JSON.parse(localStorage.getItem('celestia_reservations')) || [];
+                    existing.unshift(reservationData);
+                    localStorage.setItem('celestia_reservations', JSON.stringify(existing));
+                }
+            }
+
+            // Execute the submit operation
+            submitReservation().then(() => {
                 // 1. Show Toast Success message
                 if (toast) {
                     toast.classList.add('active');
@@ -148,8 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 submitBtn.disabled = false;
                 submitBtn.style.opacity = '1';
                 submitBtn.innerHTML = originalBtnText;
-
-            }, 1800);
+            });
         });
     }
 

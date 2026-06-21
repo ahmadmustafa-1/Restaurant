@@ -139,23 +139,59 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let activeCategory = 'all';
     let searchQuery = '';
+    let currentMenuItems = [];
+
+    // Helper to fetch menu data from Express API
+    async function fetchMenuData() {
+        try {
+            const url = `http://localhost:3000/api/menu?category=${activeCategory}&search=${searchQuery}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("API response error");
+            currentMenuItems = await response.json();
+        } catch (err) {
+            console.warn("Backend API offline. Falling back to local mock data.", err);
+            // Fallback filtering in memory using local static array
+            currentMenuItems = MENU_ITEMS.filter(item => {
+                const matchesCategory = activeCategory === 'all' || item.category === activeCategory;
+                const matchesSearch = item.name.toLowerCase().includes(searchQuery) || 
+                                      item.description.toLowerCase().includes(searchQuery);
+                return matchesCategory && matchesSearch;
+            });
+        }
+    }
 
     // Function to render items in menu grid
-    function renderMenu() {
+    async function renderMenu() {
         if (!menuGrid) return;
         
-        // Filter elements
-        const filteredItems = MENU_ITEMS.filter(item => {
-            const matchesCategory = activeCategory === 'all' || item.category === activeCategory;
-            const matchesSearch = item.name.toLowerCase().includes(searchQuery) || 
-                                  item.description.toLowerCase().includes(searchQuery);
-            return matchesCategory && matchesSearch;
-        });
+        // Show dynamic spinner
+        menuGrid.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 5rem 0; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+                <svg width="40" height="40" viewBox="0 0 38 38" stroke="var(--primary)" style="animation: spin 1s linear infinite;">
+                    <g fill="none" fill-rule="evenodd">
+                        <g transform="translate(1 1)" stroke-width="2">
+                            <circle stroke-opacity=".1" cx="18" cy="18" r="18"/>
+                            <path d="M36 18c0-9.94-8.06-18-18-18"/>
+                        </g>
+                    </g>
+                </svg>
+                <p style="font-family: var(--font-ui); font-size: 0.95rem; letter-spacing: 0.5px;">Curating Delicacies...</p>
+            </div>
+        `;
 
-        // Clear existing children
+        // Inject dynamic style for spin keyframes if not present
+        if (!document.getElementById('menu-spin-keyframes')) {
+            const style = document.createElement('style');
+            style.id = 'menu-spin-keyframes';
+            style.innerHTML = `@keyframes spin { 100% { transform: rotate(360deg); } }`;
+            document.head.appendChild(style);
+        }
+        
+        await fetchMenuData();
+        
         menuGrid.innerHTML = '';
-
-        if (filteredItems.length === 0) {
+ 
+        if (currentMenuItems.length === 0) {
             menuGrid.innerHTML = `
                 <div class="no-results">
                     <svg viewBox="0 0 24 24">
@@ -169,14 +205,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Render cards
-        filteredItems.forEach((item, index) => {
+        currentMenuItems.forEach((item, index) => {
             const ratingStars = Array(5).fill('')
                 .map((_, i) => `<svg class="star-icon" viewBox="0 0 24 24" style="fill: ${i < item.rating ? 'var(--primary)' : 'var(--text-muted)'}"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`)
                 .join('');
 
             const card = document.createElement('div');
             card.className = 'glass-card menu-card';
-            // Offset anim delays to make staggering entry smooth
             card.style.animationDelay = `${index * 0.05}s`;
             
             card.innerHTML = `
@@ -210,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
                 const itemId = this.getAttribute('data-id');
-                const selectedItem = MENU_ITEMS.find(i => i.id == itemId);
+                const selectedItem = currentMenuItems.find(i => i.id == itemId) || MENU_ITEMS.find(i => i.id == itemId);
                 
                 // Add selected item details to cart using global API
                 if (window.cartAPI) {
