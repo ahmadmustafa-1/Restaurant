@@ -273,23 +273,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 1. Load data from localStorage or API
     async function loadReservations() {
+        let apiReservations = [];
         try {
             const url = `https://celestia-api-46e5.onrender.com/api/reservations?status=${currentFilter}&search=${currentSearchQuery}`;
             const response = await fetch(url);
-            if (!response.ok) throw new Error("API load error");
-            reservations = await response.json();
-            // Fetch stats from API
-            await loadStatsAPI();
-        } catch (err) {
-            console.warn("Backend API offline. Loading from localStorage.", err);
-            // Local fallback
-            try {
-                reservations = JSON.parse(localStorage.getItem('celestia_reservations')) || [];
-            } catch (err2) {
-                reservations = [];
+            if (response.ok) {
+                apiReservations = await response.json();
+                // Fetch stats from API
+                await loadStatsAPI();
+            } else {
+                throw new Error("API load error");
             }
-            updateStatsLocal();
+        } catch (err) {
+            console.warn("Backend API offline. Loading from localStorage fallback.", err);
         }
+
+        // Fetch local fallback reservations
+        let localReservations = [];
+        try {
+            localReservations = JSON.parse(localStorage.getItem('celestia_reservations')) || [];
+        } catch (err2) {
+            localReservations = [];
+        }
+
+        // Combine and de-duplicate by ID
+        const combined = [...apiReservations];
+        localReservations.forEach(localRes => {
+            if (!combined.some(r => r.id === localRes.id)) {
+                combined.push(localRes);
+            }
+        });
+
+        reservations = combined;
+        
+        // Save the merged list back to localStorage to preserve synced server state
+        saveReservations();
         renderTable();
     }
 
@@ -323,6 +341,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         orders = combined;
+        // Save the merged list back to localStorage to preserve synced server state
+        try {
+            localStorage.setItem('celestia_orders', JSON.stringify(orders));
+        } catch (e) {}
         renderOrdersTable();
         await loadStatsAPI();
     }
@@ -621,6 +643,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const idx = reservations.findIndex(r => r.id === id);
             if (idx !== -1) reservations[idx] = updatedItem;
             
+            saveReservations(); // Keep local storage updated!
             await loadStatsAPI();
             renderTable();
             showToast(`Reservation set to: ${newStatus}`);
@@ -648,18 +671,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'DELETE'
             });
             if (!response.ok) throw new Error("API delete error");
-            
-            reservations = reservations.filter(r => r.id !== id);
-            await loadStatsAPI();
-            renderTable();
-            showToast("Reservation record deleted permanently.");
         } catch (err) {
             console.warn("Backend API offline. Deleting locally.", err);
-            reservations = reservations.filter(r => r.id !== id);
-            saveReservations();
-            renderTable();
-            showToast("Reservation record deleted permanently.");
         }
+
+        reservations = reservations.filter(r => r.id !== id);
+        saveReservations(); // Keep local storage updated!
+        await loadStatsAPI();
+        renderTable();
+        showToast("Reservation record deleted permanently.");
     }
 
     function clearAllReservations() {
