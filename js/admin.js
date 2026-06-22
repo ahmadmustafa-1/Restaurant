@@ -63,18 +63,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function loadOrders() {
+        let apiOrders = [];
         try {
             const response = await fetch('https://celestia-api-46o5.onrender.com/api/orders');
-            if (!response.ok) throw new Error("API orders load error");
-            orders = await response.json();
-        } catch (err) {
-            console.warn("Backend API offline. Loading orders from localStorage.", err);
-            try {
-                orders = JSON.parse(localStorage.getItem('celestia_orders')) || [];
-            } catch (err2) {
-                orders = [];
+            if (response.ok) {
+                apiOrders = await response.json();
+            } else {
+                throw new Error("API orders load error");
             }
+        } catch (err) {
+            console.warn("Backend API offline for orders load.", err);
         }
+
+        // Fetch local fallback orders
+        let localOrders = [];
+        try {
+            localOrders = JSON.parse(localStorage.getItem('celestia_orders')) || [];
+        } catch (err2) {
+            localOrders = [];
+        }
+
+        // Combine and de-duplicate by ID
+        const combined = [...apiOrders];
+        localOrders.forEach(localOrd => {
+            if (!combined.some(o => o.id === localOrd.id)) {
+                combined.push(localOrd);
+            }
+        });
+
+        orders = combined;
         renderOrdersTable();
         await loadStatsAPI();
     }
@@ -88,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
             animateCounter(statPending, stats.pending);
             animateCounter(statConfirmed, stats.confirmed);
             animateCounter(statCancelled, stats.cancelled);
-            animateCounter(statOrders, stats.totalOrders || 0);
+            animateCounter(statOrders, orders.length); // Use combined length including local orders
         } catch (err) {
             updateStatsLocal();
         }

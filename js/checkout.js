@@ -27,6 +27,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalItemTotal = document.getElementById('modal-item-total');
     const modalPaymentMethod = document.getElementById('modal-payment-method');
     const modalAddress = document.getElementById('modal-address');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
+
+    if (modalCloseBtn) {
+        modalCloseBtn.addEventListener('click', () => {
+            if (successModal) {
+                successModal.classList.remove('active');
+                document.body.style.overflow = ''; // Unlock scrolling
+            }
+            window.location.href = 'menu.html';
+        });
+    }
 
     let cart = [];
     const deliveryFee = 150; // PKR 150 flat delivery fee
@@ -288,15 +299,50 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     if (!response.ok) throw new Error("API post error");
                     const orderData = await response.json();
-                    return orderData.id;
+                    return { id: orderData.id, local: false };
                 } catch (err) {
                     console.warn("Backend API offline. Simulating order placement locally.", err);
-                    return 'CL-' + Math.floor(10000 + Math.random() * 90000);
+                    const localId = 'CL-' + Math.floor(10000 + Math.random() * 90000);
+                    return { id: localId, local: true };
                 }
             }
 
-            submitOrder().then((orderId) => {
+            submitOrder().then((result) => {
+                const orderId = result.id;
                 const grandTotalText = receiptTotal.textContent;
+
+                // If placed locally, persist in localStorage celestia_orders so admin panel loads it
+                if (result.local) {
+                    try {
+                        const localOrders = JSON.parse(localStorage.getItem('celestia_orders')) || [];
+                        const subtotal = cart.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
+                        const localOrderObj = {
+                            id: orderId,
+                            customer: {
+                                name: custName,
+                                email: custEmail,
+                                phone: custPhone
+                            },
+                            items: cart.map(item => ({
+                                id: item.id,
+                                name: item.name,
+                                price: item.price,
+                                quantity: item.quantity,
+                                total: item.price * item.quantity
+                            })),
+                            subtotal: subtotal,
+                            deliveryFee: 150,
+                            grandTotal: subtotal + 150,
+                            payment: paymentText,
+                            billing: custAddress,
+                            date: new Date().toISOString()
+                        };
+                        localOrders.unshift(localOrderObj);
+                        localStorage.setItem('celestia_orders', JSON.stringify(localOrders));
+                    } catch (e) {
+                        console.error("Failed to save local order fallback:", e);
+                    }
+                }
 
                 // Render ordered items in success screen modal
                 if (modalItemsContainer) {
