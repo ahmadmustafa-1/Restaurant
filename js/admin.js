@@ -40,6 +40,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggleLoginPassword = document.getElementById('toggle-login-password');
     const btnAdminLogout = document.getElementById('btn-admin-logout');
 
+    const loginCardView = document.getElementById('login-card-view');
+    const registerCardView = document.getElementById('register-card-view');
+    const registerForm = document.getElementById('admin-register-form');
+    const registerUsername = document.getElementById('register-username');
+    const registerPassword = document.getElementById('register-password');
+    const registerConfirmPassword = document.getElementById('register-confirm-password');
+    const registerError = document.getElementById('register-error');
+    const registerSuccess = document.getElementById('register-success');
+    const toggleRegisterPassword = document.getElementById('toggle-register-password');
+    const toggleRegisterConfirmPassword = document.getElementById('toggle-register-confirm-password');
+    const goToRegister = document.getElementById('go-to-register');
+    const goToLogin = document.getElementById('go-to-login');
+
     // Check login state on load
     checkAuthState();
 
@@ -66,13 +79,45 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setupLoginListeners() {
+        // Toggle views
+        if (goToRegister) {
+            goToRegister.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (loginCardView) loginCardView.classList.add('hide');
+                if (registerCardView) registerCardView.classList.remove('hide');
+                if (loginError) loginError.classList.add('hide');
+            });
+        }
+
+        if (goToLogin) {
+            goToLogin.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (registerCardView) registerCardView.classList.add('hide');
+                if (loginCardView) loginCardView.classList.remove('hide');
+                if (registerError) registerError.classList.add('hide');
+                if (registerSuccess) registerSuccess.classList.add('hide');
+            });
+        }
+
+        // Login form submission handler
         if (loginForm) {
             loginForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const username = loginUsername.value.trim();
                 const password = loginPassword.value;
 
-                if (username === 'admin' && password === 'admincelestia') {
+                // Load custom admin accounts from localStorage
+                let accounts = [];
+                try {
+                    accounts = JSON.parse(localStorage.getItem('celestia_admin_accounts')) || [];
+                } catch (err) {
+                    accounts = [];
+                }
+
+                const matchBuiltIn = (username === 'admin' && password === 'admincelestia');
+                const matchCustom = accounts.some(acc => acc.username.toLowerCase() === username.toLowerCase() && acc.password === password);
+
+                if (matchBuiltIn || matchCustom) {
                     sessionStorage.setItem('celestia_admin_logged_in', 'true');
                     if (loginError) loginError.classList.add('hide');
                     if (loginOverlay) loginOverlay.classList.add('hide');
@@ -90,23 +135,110 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        if (toggleLoginPassword && loginPassword) {
-            toggleLoginPassword.addEventListener('click', () => {
-                const type = loginPassword.getAttribute('type') === 'password' ? 'text' : 'password';
-                loginPassword.setAttribute('type', type);
-                
-                const svg = toggleLoginPassword.querySelector('svg');
-                if (svg) {
-                    if (type === 'text') {
-                        // Eye slash icon path
-                        svg.innerHTML = `<path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.34-4.3L13.63 7.05C13.12 7.02 12.57 7 12 7c-2.76 0-5 2.24-5 5 0 .57.02 1.12.05 1.63L8.8 15.39c-.31-.49-.5-1.07-.5-1.7 0-1.66 1.34-3 3-3 .63 0 1.21.19 1.7.5z"/>`;
-                    } else {
-                        // Regular eye icon path
-                        svg.innerHTML = `<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>`;
+        // Register form submission handler
+        if (registerForm) {
+            registerForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const username = registerUsername.value.trim();
+                const password = registerPassword.value;
+                const confirmPassword = registerConfirmPassword.value;
+
+                if (registerError) registerError.classList.add('hide');
+                if (registerSuccess) registerSuccess.classList.add('hide');
+
+                // Check password match
+                if (password !== confirmPassword) {
+                    if (registerError) {
+                        registerError.textContent = "Passwords do not match. Please try again.";
+                        registerError.classList.remove('hide');
+                        registerError.style.animation = 'none';
+                        registerError.offsetHeight;
+                        registerError.style.animation = null;
                     }
+                    return;
                 }
+
+                // Check if username is reserved
+                if (username.toLowerCase() === 'admin') {
+                    if (registerError) {
+                        registerError.textContent = "Username 'admin' is reserved. Please choose another.";
+                        registerError.classList.remove('hide');
+                        registerError.style.animation = 'none';
+                        registerError.offsetHeight;
+                        registerError.style.animation = null;
+                    }
+                    return;
+                }
+
+                // Check custom account registry uniqueness
+                let accounts = [];
+                try {
+                    accounts = JSON.parse(localStorage.getItem('celestia_admin_accounts')) || [];
+                } catch (err) {
+                    accounts = [];
+                }
+
+                if (accounts.some(acc => acc.username.toLowerCase() === username.toLowerCase())) {
+                    if (registerError) {
+                        registerError.textContent = "Username already exists. Please choose another.";
+                        registerError.classList.remove('hide');
+                        registerError.style.animation = 'none';
+                        registerError.offsetHeight;
+                        registerError.style.animation = null;
+                    }
+                    return;
+                }
+
+                // Save new account
+                accounts.push({ username, password });
+                try {
+                    localStorage.setItem('celestia_admin_accounts', JSON.stringify(accounts));
+                } catch (err) {
+                    console.error("Failed to store custom admin account:", err);
+                }
+
+                if (registerSuccess) {
+                    registerSuccess.classList.remove('hide');
+                }
+
+                setTimeout(() => {
+                    // Switch back to login card
+                    if (registerCardView) registerCardView.classList.add('hide');
+                    if (loginCardView) loginCardView.classList.remove('hide');
+                    registerForm.reset();
+                    if (registerSuccess) registerSuccess.classList.add('hide');
+                    // Autofill login fields
+                    if (loginUsername) loginUsername.value = username;
+                    if (loginPassword) loginPassword.value = '';
+                }, 1500);
             });
         }
+
+        // Toggle Password reveal helper
+        const togglePasswordField = (btn, inputField) => {
+            if (btn && inputField) {
+                btn.addEventListener('click', () => {
+                    const type = inputField.getAttribute('type') === 'password' ? 'text' : 'password';
+                    inputField.setAttribute('type', type);
+                    
+                    const svg = btn.querySelector('svg');
+                    if (svg) {
+                        if (type === 'text') {
+                            // Eye slash icon path
+                            svg.innerHTML = `<path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.34-4.3L13.63 7.05C13.12 7.02 12.57 7 12 7c-2.76 0-5 2.24-5 5 0 .57.02 1.12.05 1.63L8.8 15.39c-.31-.49-.5-1.07-.5-1.7 0-1.66 1.34-3 3-3 .63 0 1.21.19 1.7.5z"/>`;
+                        } else {
+                            // Regular eye icon path
+                            svg.innerHTML = `<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>`;
+                        }
+                    }
+                });
+            }
+        };
+
+        // Bind visibility toggles
+        togglePasswordField(toggleLoginPassword, loginPassword);
+        togglePasswordField(toggleRegisterPassword, registerPassword);
+        togglePasswordField(toggleRegisterConfirmPassword, registerConfirmPassword);
     }
 
     function init() {
