@@ -304,7 +304,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        reservations = combined;
+        // Filter out default seed reservations (Ahmad and Ahmad Mustafa)
+        const filtered = combined.filter(r => r.id !== 'res_1782034819800_iy6ht' && r.id !== 'res_1782030144468_mbsgt');
+
+        reservations = filtered;
         
         // Save the merged list back to localStorage to preserve synced server state
         saveReservations();
@@ -340,7 +343,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        orders = combined;
+        // Filter out default seed order (Ali Khan)
+        const filtered = combined.filter(o => o.id !== 'cel_2MSBMTVQJ');
+
+        orders = filtered;
         // Save the merged list back to localStorage to preserve synced server state
         try {
             localStorage.setItem('celestia_orders', JSON.stringify(orders));
