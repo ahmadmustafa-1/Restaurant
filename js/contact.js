@@ -90,8 +90,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Form submission event listener
     if (contactForm) {
+        let isSubmitting = false;
         contactForm.addEventListener('submit', (e) => {
             e.preventDefault();
+
+            if (isSubmitting) return;
 
             // Perform manual check on all keys
             let formValid = true;
@@ -106,6 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (firstInvalid) firstInvalid.focus();
                 return;
             }
+
+            isSubmitting = true;
 
             // If form is valid - trigger button loading state
             const originalBtnText = submitBtn.innerHTML;
@@ -213,6 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 submitBtn.disabled = false;
                 submitBtn.style.opacity = '1';
                 submitBtn.innerHTML = originalBtnText;
+                isSubmitting = false;
             });
         });
     }

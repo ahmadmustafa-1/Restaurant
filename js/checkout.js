@@ -245,8 +245,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 7. Order Form Submission
     if (checkoutForm) {
+        let isSubmitting = false;
         checkoutForm.addEventListener('submit', (e) => {
             e.preventDefault();
+
+            if (isSubmitting) return;
 
             // Validate contact fields
             const custName = document.getElementById('cust-name').value.trim();
@@ -258,6 +261,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert("Please fill in all required fields.");
                 return;
             }
+
+            isSubmitting = true;
 
             // Get payment type text
             const selectedRadio = document.querySelector('input[name="payment-method"]:checked');
@@ -369,6 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Reset button state
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalBtnText;
+                isSubmitting = false;
 
                 // Trigger animated Success Modal
                 if (successModal) {
