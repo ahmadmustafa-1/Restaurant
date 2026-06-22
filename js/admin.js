@@ -66,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function checkAuthState() {
+        checkApiConnection();
         const isLoggedIn = sessionStorage.getItem('celestia_admin_logged_in') === 'true';
         if (isLoggedIn) {
             if (loginOverlay) loginOverlay.classList.add('hide');
@@ -75,6 +76,29 @@ document.addEventListener('DOMContentLoaded', () => {
             if (loginOverlay) loginOverlay.classList.remove('hide');
             if (btnAdminLogout) btnAdminLogout.classList.add('hide');
             setupLoginListeners();
+        }
+    }
+
+    async function checkApiConnection() {
+        const badge = document.getElementById('api-status-badge');
+        if (!badge) return;
+
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 6000);
+            
+            const response = await fetch('https://celestia-api-46o5.onrender.com/api/stats', { signal: controller.signal });
+            clearTimeout(timeoutId);
+            
+            if (response.ok) {
+                badge.textContent = 'API Live';
+                badge.className = 'badge-status status-online';
+            } else {
+                throw new Error("Bad API response");
+            }
+        } catch (err) {
+            badge.textContent = 'API Offline';
+            badge.className = 'badge-status status-offline';
         }
     }
 

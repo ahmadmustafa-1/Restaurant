@@ -144,6 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     if (!response.ok) throw new Error("API post error");
                     console.log("Reservation persisted in backend API database.");
+                    return true;
                 } catch (err) {
                     console.warn("Backend API offline. Falling back to local persistence.", err);
                     
@@ -167,18 +168,35 @@ document.addEventListener('DOMContentLoaded', () => {
                     const existing = JSON.parse(localStorage.getItem('celestia_reservations')) || [];
                     existing.unshift(reservationData);
                     localStorage.setItem('celestia_reservations', JSON.stringify(existing));
+                    return false;
                 }
             }
 
             // Execute the submit operation
-            submitReservation().then(() => {
-                // 1. Show Toast Success message
+            submitReservation().then((isSuccess) => {
+                // 1. Show Toast Success or Warning message
                 if (toast) {
+                    const toastTitle = toast.querySelector('h4');
+                    const toastDesc = toast.querySelector('p');
+                    const svgPath = toast.querySelector('svg path');
+
+                    if (isSuccess) {
+                        toast.classList.remove('warning');
+                        if (toastTitle) toastTitle.textContent = "Message Transmitted";
+                        if (toastDesc) toastDesc.textContent = "Our concierge will reach out to you within 2 hours.";
+                        if (svgPath) svgPath.setAttribute('d', 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z');
+                    } else {
+                        toast.classList.add('warning');
+                        if (toastTitle) toastTitle.textContent = "Server Offline (Fallback)";
+                        if (toastDesc) toastDesc.textContent = "Saved locally. Please call +92 321 0909091 to confirm your table!";
+                        if (svgPath) svgPath.setAttribute('d', 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z');
+                    }
+
                     toast.classList.add('active');
-                    // Auto-hide toast after 4.5 seconds
+                    // Auto-hide toast after 6 seconds
                     setTimeout(() => {
                         toast.classList.remove('active');
-                    }, 4500);
+                    }, 6000);
                 }
 
                 // 2. Clear input elements & remove validity styling

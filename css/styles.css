@@ -897,4 +897,12 @@ html.light-theme .cart-count-badge {
     color: var(--text-secondary);
 }
 
+/* Form warning status overrides */
+.toast-notification.warning {
+    border-color: #ffc107;
+}
+.toast-notification.warning .toast-icon {
+    fill: #ffc107;
+}
+
 
