@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 6000);
             
-            const response = await fetch('https://celestia-api-46o5.onrender.com/api/stats', { signal: controller.signal });
+            const response = await fetch('https://celestia-api-46e5.onrender.com/api/stats', { signal: controller.signal });
             clearTimeout(timeoutId);
             
             if (response.ok) {
@@ -274,7 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Load data from localStorage or API
     async function loadReservations() {
         try {
-            const url = `https://celestia-api-46o5.onrender.com/api/reservations?status=${currentFilter}&search=${currentSearchQuery}`;
+            const url = `https://celestia-api-46e5.onrender.com/api/reservations?status=${currentFilter}&search=${currentSearchQuery}`;
             const response = await fetch(url);
             if (!response.ok) throw new Error("API load error");
             reservations = await response.json();
@@ -296,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadOrders() {
         let apiOrders = [];
         try {
-            const response = await fetch('https://celestia-api-46o5.onrender.com/api/orders');
+            const response = await fetch('https://celestia-api-46e5.onrender.com/api/orders');
             if (response.ok) {
                 apiOrders = await response.json();
             } else {
@@ -329,7 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadStatsAPI() {
         try {
-            const response = await fetch('https://celestia-api-46o5.onrender.com/api/stats');
+            const response = await fetch('https://celestia-api-46e5.onrender.com/api/stats');
             if (!response.ok) throw new Error("API stats error");
             const stats = await response.json();
             animateCounter(statTotal, stats.totalBookings);
@@ -607,7 +607,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 5. Action Handlers
     async function updateItemStatus(id, newStatus) {
         try {
-            const response = await fetch(`https://celestia-api-46o5.onrender.com/api/reservations/${id}/status`, {
+            const response = await fetch(`https://celestia-api-46e5.onrender.com/api/reservations/${id}/status`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
@@ -644,7 +644,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!confirmDelete) return;
 
         try {
-            const response = await fetch(`https://celestia-api-46o5.onrender.com/api/reservations/${id}`, {
+            const response = await fetch(`https://celestia-api-46e5.onrender.com/api/reservations/${id}`, {
                 method: 'DELETE'
             });
             if (!response.ok) throw new Error("API delete error");
@@ -834,7 +834,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!confirmDelete) return;
 
         try {
-            const response = await fetch(`https://celestia-api-46o5.onrender.com/api/orders/${id}`, {
+            const response = await fetch(`https://celestia-api-46e5.onrender.com/api/orders/${id}`, {
                 method: 'DELETE'
             });
             if (!response.ok) throw new Error("Delete endpoint error");

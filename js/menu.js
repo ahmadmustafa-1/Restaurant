@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Helper to fetch menu data from Express API
     async function fetchMenuData() {
         try {
-            const url = `https://celestia-api-46o5.onrender.com/api/menu?category=${activeCategory}&search=${searchQuery}`;
+            const url = `https://celestia-api-46e5.onrender.com/api/menu?category=${activeCategory}&search=${searchQuery}`;
             const response = await fetch(url);
             if (!response.ok) throw new Error("API response error");
             currentMenuItems = await response.json();
