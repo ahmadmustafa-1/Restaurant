@@ -155,7 +155,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         email: payload.email,
                         subject: payload.subject,
                         message: payload.message,
-                        date: new Date().toLocaleDateString('en-US', {
+                        date: new Date().toLocaleString('en-US', {
+                            timeZone: 'Asia/Karachi',
                             year: 'numeric',
                             month: 'short',
                             day: 'numeric',

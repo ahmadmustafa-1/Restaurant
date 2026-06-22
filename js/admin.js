@@ -770,6 +770,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Format date
             const dateStr = item.date ? new Date(item.date).toLocaleString('en-US', {
+                timeZone: 'Asia/Karachi',
                 year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
             }) : 'N/A';
 
