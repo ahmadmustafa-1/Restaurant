@@ -279,8 +279,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(url);
             if (response.ok) {
                 apiReservations = await response.json();
-                // Fetch stats from API
-                await loadStatsAPI();
             } else {
                 throw new Error("API load error");
             }
@@ -352,23 +350,10 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('celestia_orders', JSON.stringify(orders));
         } catch (e) {}
         renderOrdersTable();
-        await loadStatsAPI();
+        updateStatsLocal();
     }
 
-    async function loadStatsAPI() {
-        try {
-            const response = await fetch('https://celestia-api-46e5.onrender.com/api/stats');
-            if (!response.ok) throw new Error("API stats error");
-            const stats = await response.json();
-            animateCounter(statTotal, stats.totalBookings);
-            animateCounter(statPending, stats.pending);
-            animateCounter(statConfirmed, stats.confirmed);
-            animateCounter(statCancelled, stats.cancelled);
-            animateCounter(statOrders, orders.length); // Use combined length including local orders
-        } catch (err) {
-            updateStatsLocal();
-        }
-    }
+
 
     function updateStatsLocal() {
         const total = reservations.length;
@@ -650,7 +635,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (idx !== -1) reservations[idx] = updatedItem;
             
             saveReservations(); // Keep local storage updated!
-            await loadStatsAPI();
             renderTable();
             showToast(`Reservation set to: ${newStatus}`);
         } catch (err) {
@@ -683,7 +667,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         reservations = reservations.filter(r => r.id !== id);
         saveReservations(); // Keep local storage updated!
-        await loadStatsAPI();
         renderTable();
         showToast("Reservation record deleted permanently.");
     }
