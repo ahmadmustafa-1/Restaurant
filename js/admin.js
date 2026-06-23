@@ -130,32 +130,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 const username = loginUsername.value.trim();
                 const password = loginPassword.value;
 
-                // Load custom admin accounts from localStorage
-                let accounts = [];
-                try {
-                    accounts = JSON.parse(localStorage.getItem('celestia_admin_accounts')) || [];
-                } catch (err) {
-                    accounts = [];
-                }
+                const submitBtn = loginForm.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = "Authenticating...";
 
-                const matchBuiltIn = (username === 'admin' && password === 'admincelestia');
-                const matchCustom = accounts.some(acc => acc.username.toLowerCase() === username.toLowerCase() && acc.password === password);
-
-                if (matchBuiltIn || matchCustom) {
+                fetch('https://celestia-api-46e5.onrender.com/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                })
+                .then(res => {
+                    if (!res.ok) throw new Error("Invalid credentials");
+                    return res.json();
+                })
+                .then(data => {
                     sessionStorage.setItem('celestia_admin_logged_in', 'true');
                     if (loginError) loginError.classList.add('hide');
                     if (loginOverlay) loginOverlay.classList.add('hide');
                     if (btnAdminLogout) btnAdminLogout.classList.remove('hide');
                     init();
-                } else {
+                })
+                .catch(err => {
+                    console.error("Auth error:", err);
                     if (loginError) {
                         loginError.classList.remove('hide');
-                        // Retrigger shake animation
                         loginError.style.animation = 'none';
                         loginError.offsetHeight; /* trigger reflow */
                         loginError.style.animation = null;
                     }
-                }
+                })
+                .finally(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                });
             });
         }
 
@@ -194,47 +202,52 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                // Check custom account registry uniqueness
-                let accounts = [];
-                try {
-                    accounts = JSON.parse(localStorage.getItem('celestia_admin_accounts')) || [];
-                } catch (err) {
-                    accounts = [];
-                }
+                const submitBtn = registerForm.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = "Registering...";
 
-                if (accounts.some(acc => acc.username.toLowerCase() === username.toLowerCase())) {
+                fetch('https://celestia-api-46e5.onrender.com/api/admin/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                })
+                .then(res => {
+                    if (!res.ok) {
+                        return res.json().then(data => { throw new Error(data.message || "Registration failed"); });
+                    }
+                    return res.json();
+                })
+                .then(() => {
+                    if (registerSuccess) {
+                        registerSuccess.classList.remove('hide');
+                    }
+
+                    setTimeout(() => {
+                        // Switch back to login card
+                        if (registerCardView) registerCardView.classList.add('hide');
+                        if (loginCardView) loginCardView.classList.remove('hide');
+                        registerForm.reset();
+                        if (registerSuccess) registerSuccess.classList.add('hide');
+                        // Autofill login fields
+                        if (loginUsername) loginUsername.value = username;
+                        if (loginPassword) loginPassword.value = '';
+                    }, 1500);
+                })
+                .catch(err => {
+                    console.error("Registration error:", err);
                     if (registerError) {
-                        registerError.textContent = "Username already exists. Please choose another.";
+                        registerError.textContent = err.message || "Failed to register account.";
                         registerError.classList.remove('hide');
                         registerError.style.animation = 'none';
                         registerError.offsetHeight;
                         registerError.style.animation = null;
                     }
-                    return;
-                }
-
-                // Save new account
-                accounts.push({ username, password });
-                try {
-                    localStorage.setItem('celestia_admin_accounts', JSON.stringify(accounts));
-                } catch (err) {
-                    console.error("Failed to store custom admin account:", err);
-                }
-
-                if (registerSuccess) {
-                    registerSuccess.classList.remove('hide');
-                }
-
-                setTimeout(() => {
-                    // Switch back to login card
-                    if (registerCardView) registerCardView.classList.add('hide');
-                    if (loginCardView) loginCardView.classList.remove('hide');
-                    registerForm.reset();
-                    if (registerSuccess) registerSuccess.classList.add('hide');
-                    // Autofill login fields
-                    if (loginUsername) loginUsername.value = username;
-                    if (loginPassword) loginPassword.value = '';
-                }, 1500);
+                })
+                .finally(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                });
             });
         }
 
@@ -273,87 +286,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 1. Load data from localStorage or API
     async function loadReservations() {
-        let apiReservations = [];
         try {
             const url = `https://celestia-api-46e5.onrender.com/api/reservations?status=${currentFilter}&search=${currentSearchQuery}`;
             const response = await fetch(url);
-            if (response.ok) {
-                apiReservations = await response.json();
-            } else {
-                throw new Error("API load error");
-            }
+            if (!response.ok) throw new Error("API load error");
+            const data = await response.json();
+            reservations = data.filter(r => r.id !== 'res_1782034819800_iy6ht' && r.id !== 'res_1782030144468_mbsgt');
         } catch (err) {
-            console.warn("Backend API offline. Loading from localStorage fallback.", err);
+            console.error("Backend API load error.", err);
+            reservations = [];
         }
-
-        // Fetch local fallback reservations
-        let localReservations = [];
-        try {
-            localReservations = JSON.parse(localStorage.getItem('celestia_reservations')) || [];
-        } catch (err2) {
-            localReservations = [];
-        }
-
-        // Combine and de-duplicate by ID
-        const combined = [...apiReservations];
-        localReservations.forEach(localRes => {
-            if (!combined.some(r => r.id === localRes.id)) {
-                combined.push(localRes);
-            }
-        });
-
-        // Filter out default seed reservations (Ahmad and Ahmad Mustafa)
-        const filtered = combined.filter(r => r.id !== 'res_1782034819800_iy6ht' && r.id !== 'res_1782030144468_mbsgt');
-
-        reservations = filtered;
-        
-        // Save the merged list back to localStorage to preserve synced server state
-        saveReservations();
+        updateStatsLocal();
         renderTable();
     }
 
     async function loadOrders() {
-        let apiOrders = [];
         try {
             const response = await fetch('https://celestia-api-46e5.onrender.com/api/orders');
-            if (response.ok) {
-                apiOrders = await response.json();
-            } else {
-                throw new Error("API orders load error");
-            }
+            if (!response.ok) throw new Error("API orders load error");
+            const data = await response.json();
+            orders = data.filter(o => o.id !== 'cel_2MSBMTVQJ');
         } catch (err) {
-            console.warn("Backend API offline for orders load.", err);
+            console.error("Backend API orders load error.", err);
+            orders = [];
         }
-
-        // Fetch local fallback orders
-        let localOrders = [];
-        try {
-            localOrders = JSON.parse(localStorage.getItem('celestia_orders')) || [];
-        } catch (err2) {
-            localOrders = [];
-        }
-
-        // Combine and de-duplicate by ID
-        const combined = [...apiOrders];
-        localOrders.forEach(localOrd => {
-            if (!combined.some(o => o.id === localOrd.id)) {
-                combined.push(localOrd);
-            }
-        });
-
-        // Filter out default seed order (Ali Khan)
-        const filtered = combined.filter(o => o.id !== 'cel_2MSBMTVQJ');
-
-        orders = filtered;
-        // Save the merged list back to localStorage to preserve synced server state
-        try {
-            localStorage.setItem('celestia_orders', JSON.stringify(orders));
-        } catch (e) {}
         renderOrdersTable();
         updateStatsLocal();
     }
 
+    function saveReservations() {
+        updateStatsLocal();
+    }
 
+    function saveReservations() {
+        updateStatsLocal();
+    }
 
     function updateStatsLocal() {
         const total = reservations.length;
@@ -366,16 +333,6 @@ document.addEventListener('DOMContentLoaded', () => {
         animateCounter(statConfirmed, confirmed);
         animateCounter(statCancelled, cancelled);
         animateCounter(statOrders, orders.length);
-    }
-
-    // Save current state back to localStorage (used in fallback mode)
-    function saveReservations() {
-        try {
-            localStorage.setItem('celestia_reservations', JSON.stringify(reservations));
-        } catch (err) {
-            console.error("Failed to save reservations to localStorage:", err);
-        }
-        updateStatsLocal();
     }
 
     // Increment counting animations for premium feel
@@ -671,24 +628,32 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast("Reservation record deleted permanently.");
     }
 
-    function clearAllReservations() {
+    async function clearAllReservations() {
         if (reservations.length === 0) {
             alert("No reservation records exist to clear.");
             return;
         }
 
-        const verify1 = confirm("CAUTION: This will permanently delete ALL loaded reservation inquiries. Do you want to proceed?");
+        const verify1 = confirm("CAUTION: This will permanently delete ALL reservation inquiries from the MongoDB database. Do you want to proceed?");
         if (!verify1) return;
 
         const verify2 = confirm("FINAL CHECK: Are you absolutely sure? This action is irreversible.");
         if (!verify2) return;
 
-        // Perform local storage wipe
-        localStorage.removeItem('celestia_reservations');
-        reservations = [];
-        updateStatsLocal();
-        renderTable();
-        showToast("Cleared local reservation records.");
+        try {
+            const response = await fetch('https://celestia-api-46e5.onrender.com/api/reservations', {
+                method: 'DELETE'
+            });
+            if (!response.ok) throw new Error("API clear error");
+            
+            reservations = [];
+            updateStatsLocal();
+            renderTable();
+            showToast("Cleared all reservation records from MongoDB database.");
+        } catch (err) {
+            console.error("Failed to clear reservations from database:", err);
+            alert("Failed to clear reservations. Server might be offline.");
+        }
     }
 
     // Export CSV module logic
@@ -853,32 +818,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         orders = orders.filter(o => o.id !== id);
-        try {
-            localStorage.setItem('celestia_orders', JSON.stringify(orders));
-        } catch (e) {}
         
         renderOrdersTable();
         updateStatsLocal();
         showToast("Order record deleted permanently.");
     }
 
-    function clearAllOrders() {
+    async function clearAllOrders() {
         if (orders.length === 0) {
             alert("No order records exist to clear.");
             return;
         }
 
-        const verify1 = confirm("CAUTION: This will permanently delete ALL online orders. Do you want to proceed?");
+        const verify1 = confirm("CAUTION: This will permanently delete ALL online orders from the MongoDB database. Do you want to proceed?");
         if (!verify1) return;
 
         const verify2 = confirm("FINAL CHECK: Are you absolutely sure? This action is irreversible.");
         if (!verify2) return;
 
-        localStorage.removeItem('celestia_orders');
-        orders = [];
-        updateStatsLocal();
-        renderOrdersTable();
-        showToast("Cleared online order records.");
+        try {
+            const response = await fetch('https://celestia-api-46e5.onrender.com/api/orders', {
+                method: 'DELETE'
+            });
+            if (!response.ok) throw new Error("API clear error");
+            
+            orders = [];
+            updateStatsLocal();
+            renderOrdersTable();
+            showToast("Cleared all online order records from MongoDB database.");
+        } catch (err) {
+            console.error("Failed to clear orders from database:", err);
+            alert("Failed to clear orders. Server might be offline.");
+        }
     }
 
     function exportOrdersToCSV() {

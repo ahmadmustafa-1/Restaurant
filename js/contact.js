@@ -151,29 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log("Reservation persisted in backend API database.");
                     return true;
                 } catch (err) {
-                    console.warn("Backend API offline. Falling back to local persistence.", err);
-                    
-                    // Fallback to localStorage
-                    const reservationData = {
-                        id: 'res_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
-                        name: payload.name,
-                        email: payload.email,
-                        subject: payload.subject,
-                        message: payload.message,
-                        date: new Date().toLocaleString('en-US', {
-                            timeZone: 'Asia/Karachi',
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        }),
-                        status: 'Pending'
-                    };
-
-                    const existing = JSON.parse(localStorage.getItem('celestia_reservations')) || [];
-                    existing.unshift(reservationData);
-                    localStorage.setItem('celestia_reservations', JSON.stringify(existing));
+                    console.warn("Backend API offline.", err);
                     return false;
                 }
             }
@@ -193,8 +171,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (svgPath) svgPath.setAttribute('d', 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z');
                     } else {
                         toast.classList.add('warning');
-                        if (toastTitle) toastTitle.textContent = "Server Offline (Fallback)";
-                        if (toastDesc) toastDesc.textContent = "Saved locally. Please call +92 321 0909091 to confirm your table!";
+                        if (toastTitle) toastTitle.textContent = "Server Offline";
+                        if (toastDesc) toastDesc.textContent = "Please call +92 321 0909091 to confirm your table booking!";
                         if (svgPath) svgPath.setAttribute('d', 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z');
                     }
 
